@@ -33,7 +33,7 @@ const audioStorage = multer.diskStorage({
   },
 });
 
-const audioFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const audioFilter = (_req: Request, file: any, cb: multer.FileFilterCallback) => {
   const allowed = ['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav'];
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
