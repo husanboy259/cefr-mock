@@ -16,6 +16,8 @@ export interface User {
   updated_at: Date;
 }
 
-export interface AuthRequest extends Express.Request {
+import { Request } from 'express';
+
+export interface AuthRequest extends Omit<Request, 'user'> {
   user?: Pick<User, 'id' | 'email' | 'username' | 'is_admin'>;
 }
