@@ -36,9 +36,10 @@ onMounted(async () => {
   const { data } = await api.get(`/writing/submissions/${route.params.id}`);
   sub.value = data;
 });
-const statusLabel = computed(() => ({
-  pending: 'Awaiting Review', graded: 'Graded', manual_review: 'Under Review',
-}[sub.value?.status] ?? sub.value?.status));
+const statusLabel = computed(() => {
+  const map: Record<string, string> = { pending: 'Awaiting Review', graded: 'Graded', manual_review: 'Under Review' };
+  return map[sub.value?.status] ?? sub.value?.status;
+});
 </script>
 
 <style scoped>
