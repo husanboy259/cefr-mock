@@ -17,11 +17,13 @@ import adminRouter     from './modules/admin/admin.router';
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:4173', 'https://cefr-mock-gpxy.vercel.app'].filter(Boolean);
+const allowedOrigins = [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:4173'].filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) cb(null, true);
-    else cb(new Error('Not allowed by CORS'));
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
