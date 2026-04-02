@@ -17,7 +17,7 @@ import adminRouter     from './modules/admin/admin.router';
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:4173'].filter(Boolean);
+const allowedOrigins = [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:4173', 'https://cefr-mock-gpxy.vercel.app'].filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) cb(null, true);
