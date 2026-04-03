@@ -1,0 +1,375 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model answer_options {
+  id           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  question_id  String         @db.Uuid
+  option_text  String
+  is_correct   Boolean        @default(false)
+  sort_order   Int            @default(0)
+  questions    questions      @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quiz_answers quiz_answers[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model bookmarks {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id     String    @db.Uuid
+  exercise_id String    @db.Uuid
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  exercises   exercises @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, exercise_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model categories {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(100)
+  slug        String      @unique @db.VarChar(100)
+  description String?
+  sort_order  Int         @default(0)
+  is_active   Boolean     @default(true)
+  exercises   exercises[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model daily_activity {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id             String   @db.Uuid
+  activity_date       DateTime @db.Date
+  exercises_completed Int      @default(0)
+  points_earned       Int      @default(0)
+  users               users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, activity_date])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model exercises {
+  id                   String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  language_id          Int
+  category_id          Int?
+  type                 exercise_type
+  level                cefr_level
+  difficulty           difficulty             @default(medium)
+  title                String                 @db.VarChar(300)
+  description          String?
+  instructions         String?
+  thumbnail_url        String?                @db.VarChar(500)
+  tags                 String[]
+  estimated_minutes    Int?
+  is_published         Boolean                @default(false)
+  is_featured          Boolean                @default(false)
+  total_attempts       Int                    @default(0)
+  avg_score            Decimal?               @db.Decimal(5, 2)
+  created_by           String?                @db.Uuid
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  bookmarks            bookmarks[]
+  categories           categories?            @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                users?                 @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  languages            languages              @relation(fields: [language_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  listening_tracks     listening_tracks[]
+  questions            questions[]
+  quiz_attempts        quiz_attempts[]
+  reading_passages     reading_passages[]
+  speaking_submissions speaking_submissions[]
+  speaking_tasks       speaking_tasks[]
+  user_progress        user_progress[]
+  writing_submissions  writing_submissions[]
+  writing_tasks        writing_tasks[]
+
+  @@index([level], map: "idx_exercises_level")
+  @@index([is_published], map: "idx_exercises_pub", where: raw("(is_published = true)"))
+  @@index([tags], map: "idx_exercises_tags", type: Gin)
+  @@index([type], map: "idx_exercises_type")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model languages {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique @db.VarChar(10)
+  name      String      @db.VarChar(100)
+  is_active Boolean     @default(true)
+  exercises exercises[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model listening_tracks {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  exercise_id  String    @db.Uuid
+  audio_url    String    @db.VarChar(500)
+  transcript   String?
+  duration_sec Int?
+  sort_order   Int       @default(0)
+  exercises    exercises @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model password_resets {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String    @db.Uuid
+  token      String    @unique @db.VarChar(255)
+  expires_at DateTime  @db.Timestamptz(6)
+  used_at    DateTime? @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model questions {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  exercise_id      String            @db.Uuid
+  passage_id       String?           @db.Uuid
+  question_text    String
+  question_type    String            @default("mcq") @db.VarChar(30)
+  explanation      String?
+  points           Int               @default(1)
+  sort_order       Int               @default(0)
+  answer_options   answer_options[]
+  exercises        exercises         @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reading_passages reading_passages? @relation(fields: [passage_id], references: [id], onUpdate: NoAction)
+  quiz_answers     quiz_answers[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model quiz_answers {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  attempt_id      String          @db.Uuid
+  question_id     String          @db.Uuid
+  selected_option String?         @db.Uuid
+  text_answer     String?
+  is_correct      Boolean?
+  points_earned   Decimal         @default(0) @db.Decimal(5, 2)
+  answered_at     DateTime        @default(now()) @db.Timestamptz(6)
+  quiz_attempts   quiz_attempts   @relation(fields: [attempt_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  questions       questions       @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  answer_options  answer_options? @relation(fields: [selected_option], references: [id], onUpdate: NoAction)
+
+  @@unique([attempt_id, question_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model quiz_attempts {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id        String         @db.Uuid
+  exercise_id    String         @db.Uuid
+  status         String         @default("in_progress") @db.VarChar(20)
+  score          Decimal?       @db.Decimal(5, 2)
+  max_score      Decimal?       @db.Decimal(5, 2)
+  percentage     Decimal?       @db.Decimal(5, 2)
+  time_taken_sec Int?
+  started_at     DateTime       @default(now()) @db.Timestamptz(6)
+  completed_at   DateTime?      @db.Timestamptz(6)
+  updated_at     DateTime       @default(now()) @db.Timestamptz(6)
+  quiz_answers   quiz_answers[]
+  exercises      exercises      @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model reading_passages {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  exercise_id String      @db.Uuid
+  body        String
+  word_count  Int?
+  sort_order  Int         @default(0)
+  questions   questions[]
+  exercises   exercises   @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model refresh_tokens {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String   @db.Uuid
+  token_hash String   @unique @db.VarChar(255)
+  expires_at DateTime @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model speaking_submissions {
+  id                                          String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                                     String            @db.Uuid
+  exercise_id                                 String            @db.Uuid
+  task_id                                     String            @db.Uuid
+  audio_url                                   String            @db.VarChar(500)
+  duration_sec                                Int?
+  file_size_bytes                             BigInt?
+  status                                      submission_status @default(pending)
+  score                                       Decimal?          @db.Decimal(5, 2)
+  max_score                                   Decimal?          @db.Decimal(5, 2)
+  feedback                                    String?
+  criteria_scores                             Json?
+  graded_by                                   String?           @db.Uuid
+  graded_at                                   DateTime?         @db.Timestamptz(6)
+  submitted_at                                DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                                  DateTime          @default(now()) @db.Timestamptz(6)
+  exercises                                   exercises         @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_speaking_submissions_graded_byTousers users?            @relation("speaking_submissions_graded_byTousers", fields: [graded_by], references: [id], onUpdate: NoAction)
+  speaking_tasks                              speaking_tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_speaking_submissions_user_idTousers   users             @relation("speaking_submissions_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model speaking_tasks {
+  id                   String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  exercise_id          String                 @db.Uuid
+  prompt               String
+  prompt_audio_url     String?                @db.VarChar(500)
+  example_audio_url    String?                @db.VarChar(500)
+  prep_time_sec        Int                    @default(30)
+  record_time_sec      Int                    @default(120)
+  grading_rubric       String?
+  criteria             Json                   @default("[]")
+  speaking_submissions speaking_submissions[]
+  exercises            exercises              @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_level_stats {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id        String        @db.Uuid
+  level          cefr_level
+  exercise_type  exercise_type
+  exercises_done Int           @default(0)
+  avg_score      Decimal?      @db.Decimal(5, 2)
+  total_points   Int           @default(0)
+  updated_at     DateTime      @default(now()) @db.Timestamptz(6)
+  users          users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, level, exercise_type])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_progress {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id         String    @db.Uuid
+  exercise_id     String    @db.Uuid
+  best_score      Decimal?  @db.Decimal(5, 2)
+  best_percentage Decimal?  @db.Decimal(5, 2)
+  total_attempts  Int       @default(0)
+  last_attempt_at DateTime? @db.Timestamptz(6)
+  completed       Boolean   @default(false)
+  completed_at    DateTime? @db.Timestamptz(6)
+  exercises       exercises @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, exercise_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_streaks {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id          String    @unique @db.Uuid
+  current_streak   Int       @default(0)
+  longest_streak   Int       @default(0)
+  last_active_date DateTime? @db.Date
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+  users            users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id                                                         String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username                                                   String                 @unique @db.VarChar(50)
+  email                                                      String                 @unique @db.VarChar(255)
+  password_hash                                              String                 @db.VarChar(255)
+  full_name                                                  String?                @db.VarChar(150)
+  avatar_url                                                 String?                @db.VarChar(500)
+  is_active                                                  Boolean                @default(true)
+  is_admin                                                   Boolean                @default(false)
+  created_at                                                 DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                                                 DateTime               @default(now()) @db.Timestamptz(6)
+  bookmarks                                                  bookmarks[]
+  daily_activity                                             daily_activity[]
+  exercises                                                  exercises[]
+  password_resets                                            password_resets[]
+  quiz_attempts                                              quiz_attempts[]
+  refresh_tokens                                             refresh_tokens[]
+  speaking_submissions_speaking_submissions_graded_byTousers speaking_submissions[] @relation("speaking_submissions_graded_byTousers")
+  speaking_submissions_speaking_submissions_user_idTousers   speaking_submissions[] @relation("speaking_submissions_user_idTousers")
+  user_level_stats                                           user_level_stats[]
+  user_progress                                              user_progress[]
+  user_streaks                                               user_streaks?
+  writing_submissions_writing_submissions_graded_byTousers   writing_submissions[]  @relation("writing_submissions_graded_byTousers")
+  writing_submissions_writing_submissions_user_idTousers     writing_submissions[]  @relation("writing_submissions_user_idTousers")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model writing_submissions {
+  id                                         String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                                    String            @db.Uuid
+  exercise_id                                String            @db.Uuid
+  task_id                                    String            @db.Uuid
+  body                                       String
+  word_count                                 Int               @default(0)
+  status                                     submission_status @default(pending)
+  score                                      Decimal?          @db.Decimal(5, 2)
+  max_score                                  Decimal?          @db.Decimal(5, 2)
+  feedback                                   String?
+  criteria_scores                            Json?
+  graded_by                                  String?           @db.Uuid
+  graded_at                                  DateTime?         @db.Timestamptz(6)
+  submitted_at                               DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                                 DateTime          @default(now()) @db.Timestamptz(6)
+  exercises                                  exercises         @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_writing_submissions_graded_byTousers users?            @relation("writing_submissions_graded_byTousers", fields: [graded_by], references: [id], onUpdate: NoAction)
+  writing_tasks                              writing_tasks     @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_writing_submissions_user_idTousers   users             @relation("writing_submissions_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model writing_tasks {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  exercise_id         String                @db.Uuid
+  prompt              String
+  example_answer      String?
+  min_words           Int                   @default(50)
+  max_words           Int                   @default(500)
+  grading_rubric      String?
+  criteria            Json                  @default("[]")
+  writing_submissions writing_submissions[]
+  exercises           exercises             @relation(fields: [exercise_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+enum cefr_level {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum difficulty {
+  easy
+  medium
+  hard
+}
+
+enum exercise_type {
+  reading
+  writing
+  listening
+  speaking
+}
+
+enum submission_status {
+  pending
+  auto_graded
+  manual_review
+  graded
+  rejected
+}
