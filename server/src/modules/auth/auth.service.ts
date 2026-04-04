@@ -115,6 +115,66 @@ export async function logout(refreshToken: string) {
   await supabase.from('refresh_tokens').delete().eq('token_hash', tokenHash);
 }
 
+export async function telegramAuth(initData: string) {
+  // Validate Telegram initData
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash) throw new UnauthorizedError('Invalid Telegram data');
+
+  params.delete('hash');
+  const dataCheckString = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(env.TELEGRAM_BOT_TOKEN).digest();
+  const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  if (expectedHash !== hash) throw new UnauthorizedError('Invalid Telegram signature');
+
+  const userParam = params.get('user');
+  if (!userParam) throw new UnauthorizedError('No user data');
+  const tgUser = JSON.parse(userParam);
+
+  const telegramId = String(tgUser.id);
+  const username = tgUser.username || `tg_${telegramId}`;
+  const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+  const email = `${telegramId}@telegram.user`;
+
+  // Find or create user
+  let { data: existing } = await supabase
+    .from('users')
+    .select('id, username, email, is_admin')
+    .eq('email', email)
+    .limit(1);
+
+  let user = existing?.[0];
+
+  if (!user) {
+    const password_hash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12);
+    const { data: created, error } = await supabase
+      .from('users')
+      .insert({ username, email, password_hash, full_name: fullName })
+      .select('id, username, email, is_admin')
+      .single();
+    if (error) throw new Error(error.message);
+    user = created;
+  }
+
+  const payload: JwtPayload = { userId: user.id, email: user.email, username: user.username, isAdmin: user.is_admin };
+  const accessToken = signAccessToken(payload);
+  const refreshToken = signRefreshToken(payload);
+  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+  await supabase.from('refresh_tokens').insert({
+    user_id: user.id,
+    token_hash: tokenHash,
+    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  return { accessToken, refreshToken, user: { id: user.id, username: user.username, email: user.email, isAdmin: user.is_admin } };
+}
+
 export async function getMe(userId: string) {
   const { data: user } = await supabase
     .from('users')

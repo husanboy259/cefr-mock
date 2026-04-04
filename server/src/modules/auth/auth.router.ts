@@ -11,5 +11,6 @@ router.post('/login', validate(loginSchema), ctrl.loginCtrl);
 router.post('/refresh', ctrl.refreshCtrl);
 router.post('/logout', ctrl.logoutCtrl);
 router.get('/me', authenticate, ctrl.getMeCtrl);
+router.post('/telegram', ctrl.telegramAuthCtrl);
 
 export default router;

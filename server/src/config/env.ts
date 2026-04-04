@@ -15,6 +15,7 @@ const envSchema = z.object({
   CLIENT_URL: z.string().default('http://localhost:5173'),
   UPLOAD_DIR: z.string().default('./uploads'),
   MAX_FILE_SIZE_MB: z.coerce.number().default(50),
+  TELEGRAM_BOT_TOKEN: z.string().default(''),
 });
 
 export const env = envSchema.parse(process.env);

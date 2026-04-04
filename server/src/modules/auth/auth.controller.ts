@@ -37,3 +37,11 @@ export async function getMeCtrl(req: Request, res: Response, next: NextFunction)
     res.json(user);
   } catch (err) { next(err); }
 }
+
+export async function telegramAuthCtrl(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { initData } = req.body;
+    const result = await authService.telegramAuth(initData);
+    res.json(result);
+  } catch (err) { next(err); }
+}
