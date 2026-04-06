@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
     <!-- Logo & Title -->
-    <div class="app-header">
+    <div class="app-header fade-down">
       <div class="app-logo">S</div>
       <h1 class="app-name">Spiko</h1>
       <p class="app-sub">Multilevel Exam Preparation</p>
@@ -9,7 +9,7 @@
 
     <!-- Main Exam Cards -->
     <div class="section">
-      <RouterLink to="/exercises?type=reading" class="exam-card">
+      <RouterLink to="/exercises?type=reading" class="exam-card slide-up" style="animation-delay:.1s">
         <div class="exam-icon reading-icon">📖</div>
         <div class="exam-info">
           <div class="exam-title">Reading Exam</div>
@@ -18,7 +18,7 @@
         <div class="exam-time">🕐 ~15 min</div>
       </RouterLink>
 
-      <RouterLink to="/exercises?type=writing" class="exam-card">
+      <RouterLink to="/exercises?type=writing" class="exam-card slide-up" style="animation-delay:.2s">
         <div class="exam-icon writing-icon">✍️</div>
         <div class="exam-info">
           <div class="exam-title">Writing Exam</div>
@@ -118,4 +118,29 @@
 }
 .nav-item.active { color: #E87C2A; }
 .nav-icon { font-size: 1.3rem; }
+
+/* Animations */
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-down { animation: fadeDown .5s ease both; }
+.slide-up  { animation: slideUp .5s ease both; opacity: 0; }
+
+/* Card tap effect */
+.exam-card { transition: transform .15s, box-shadow .15s; }
+.exam-card:active { transform: scale(.97); box-shadow: none; }
+
+/* Logo pulse */
+.app-logo { animation: fadeDown .4s ease both; }
+.app-logo:hover { animation: pulse .4s ease; }
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
 </style>
