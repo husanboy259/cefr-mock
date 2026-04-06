@@ -28,28 +28,6 @@
       </RouterLink>
     </div>
 
-    <!-- Quick Practice -->
-    <div class="section">
-      <div class="section-label">QUICK PRACTICE</div>
-      <div class="quick-grid">
-        <RouterLink to="/exercises?level=A1" class="quick-card">
-          <div class="quick-icon">💬</div>
-          <div class="quick-title">Beginner</div>
-          <div class="quick-time">A1</div>
-        </RouterLink>
-        <RouterLink to="/exercises?level=B1" class="quick-card">
-          <div class="quick-icon">📝</div>
-          <div class="quick-title">Intermediate</div>
-          <div class="quick-time">B1</div>
-        </RouterLink>
-        <RouterLink to="/exercises?level=C1" class="quick-card">
-          <div class="quick-icon">🎯</div>
-          <div class="quick-title">Advanced</div>
-          <div class="quick-time">C1</div>
-        </RouterLink>
-      </div>
-    </div>
-
     <!-- Bottom Nav -->
     <nav class="bottom-nav">
       <RouterLink to="/" class="nav-item" :class="{ active: $route.path === '/' }">
