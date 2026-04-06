@@ -2,8 +2,8 @@
   <div class="home-page">
     <!-- Logo & Title -->
     <div class="app-header">
-      <div class="app-logo">C</div>
-      <h1 class="app-name">CEFR Pro</h1>
+      <div class="app-logo">S</div>
+      <h1 class="app-name">Spiko</h1>
       <p class="app-sub">Multilevel Exam Preparation</p>
     </div>
 
