@@ -9,6 +9,10 @@ export interface AuthUser {
   full_name?: string;
   avatar_url?: string;
   isAdmin: boolean;
+  telegram_id?: string;
+  telegram_username?: string;
+  telegram_photo?: string;
+  language_code?: string;
 }
 
 export const useAuthStore = defineStore('auth', () => {
